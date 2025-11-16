@@ -1,7 +1,11 @@
 package usecase
 
 import (
-	"gopr/internal/repo"
+	"context"
+	"gopr/cmd/config"
+	"gopr/internal/repo/pg"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Cases struct {
@@ -10,18 +14,14 @@ type Cases struct {
 	PullRequest *PullRequest
 }
 
-func Setup(
-	teamRepo repo.Team,
-	userRepo repo.User,
-	prRepo repo.PullRequest,
-) Cases {
-	teamCase := NewTeam(teamRepo, userRepo)
-	userCase := NewUser(userRepo)
-	prCase := NewPullRequest(prRepo, userRepo)
+func Setup(ctx context.Context, cfg *config.Config, db *pgxpool.Pool) Cases {
+	teamRepo := pg.NewTeamRepo(db)
+	userRepo := pg.NewUserRepo(db)
+	prRepo := pg.NewPullRequestRepo(db)
 
 	return Cases{
-		Team:        teamCase,
-		User:        userCase,
-		PullRequest: prCase,
+		Team:        NewTeam(teamRepo, userRepo),
+		User:        NewUser(userRepo, teamRepo),
+		PullRequest: NewPullRequest(prRepo, userRepo),
 	}
 }

@@ -26,7 +26,7 @@ func NewPullRequestRepo(db *pgxpool.Pool) *PullRequestRepo {
 
 func (r *PullRequestRepo) Create(ctx context.Context, pr *domain.PullRequest) error {
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO pull_request(id, author_id, name, status, created_at)
+		`INSERT INTO pull_requests(id, author_id, name, status, created_at)
          VALUES ($1, $2, $3, $4, NOW())`,
 		pr.Id,
 		pr.AuthorId,
@@ -44,7 +44,7 @@ func (r *PullRequestRepo) GetByID(ctx context.Context, id string) (*domain.PullR
 
 	err := r.db.QueryRow(ctx,
 		`SELECT id, author_id, name, status, created_at, merged_at
-         FROM pull_request
+         FROM pull_requests
          WHERE id = $1`,
 		id,
 	).Scan(
@@ -68,8 +68,8 @@ func (r *PullRequestRepo) GetByID(ctx context.Context, id string) (*domain.PullR
 
 func (r *PullRequestRepo) UpdateStatusMerged(ctx context.Context, id string) error {
 	res, err := r.db.Exec(ctx,
-		`UPDATE pull_request
-         SET status = 'merged',
+		`UPDATE pull_requests
+         SET status = 'MERGED',
              merged_at = COALESCE(merged_at, NOW())
          WHERE id = $1`,
 		id,
@@ -148,7 +148,7 @@ func (r *PullRequestRepo) ListByReviewer(ctx context.Context, reviewerID string)
 			"pr.created_at",
 			"pr.merged_at",
 		).
-		From("pull_request AS pr").
+		From("pull_requests AS pr").
 		Join("pull_request_reviewer AS rr ON rr.pull_request_id = pr.id").
 		Where(sq.Eq{"rr.reviewer_id": reviewerID}).
 		ToSql()

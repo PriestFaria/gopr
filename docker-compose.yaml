@@ -1,0 +1,65 @@
+services:
+  database:
+    image: postgres:16.7
+    container_name: gopr-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_NAME}" ]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 2s
+
+  migrate:
+    image: migrate/migrate
+    container_name: gopr-migrate
+    volumes:
+      - ./migrations:/migrations
+    depends_on:
+      database:
+        condition: service_healthy
+    command: [
+      "-path", "/migrations",
+      "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_NAME}?sslmode=disable",
+      "up"
+    ]
+    restart: "no"
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: gopr-server
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: database
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  adminer:
+    image: adminer
+    container_name: gopr-adminer
+    restart: always
+    ports:
+      - "1000:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  pgdata:

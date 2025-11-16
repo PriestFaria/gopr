@@ -5,8 +5,8 @@ import "time"
 type PullRequestStatus string
 
 var (
-	PullRequestStatusOpen   PullRequestStatus = "open"
-	PullRequestStatusClosed PullRequestStatus = "closed"
+	PullRequestStatusOpen   PullRequestStatus = "OPEN"
+	PullRequestStatusClosed PullRequestStatus = "MERGED"
 )
 
 type PullRequest struct {
@@ -16,9 +16,9 @@ type PullRequest struct {
 
 	Status string `json:"status"`
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	MergedAt  time.Time `json:"merged_at"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	MergedAt  *time.Time `json:"merged_at"`
 }
 
 type CreatePullRequest struct {
@@ -34,4 +34,9 @@ type ReassignPullRequest struct {
 
 type MergePullRequest struct {
 	Id string `json:"pull_request_id"`
+}
+
+type PullRequestReassignResponse struct {
+	PullRequest *PullRequest `json:"pull_request"`
+	NewReviewer string       `json:"new_reviewer"`
 }

@@ -26,7 +26,7 @@ func NewUserRepo(db *pgxpool.Pool) *UserRepo {
 
 func (r *UserRepo) Create(ctx context.Context, user *domain.User) error {
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO "user"(id, username, team_id, is_active, created_at, updated_at)
+		`INSERT INTO "users"(id, username, team_id, is_active, created_at, updated_at)
          VALUES ($1, $2, $3, $4, NOW(), NOW())`,
 		user.Id,
 		user.Username,
@@ -44,7 +44,7 @@ func (r *UserRepo) GetByID(ctx context.Context, id string) (*domain.User, error)
 
 	err := r.db.QueryRow(ctx,
 		`SELECT id, username, team_id, is_active, created_at, updated_at
-         FROM "user"
+         FROM "users"
          WHERE id = $1`,
 		id,
 	).Scan(
@@ -67,7 +67,7 @@ func (r *UserRepo) GetByID(ctx context.Context, id string) (*domain.User, error)
 
 func (r *UserRepo) UpdateIsActive(ctx context.Context, id string, isActive bool) error {
 	res, err := r.db.Exec(ctx,
-		`UPDATE "user"
+		`UPDATE "users"
          SET is_active = $1, updated_at = NOW()
          WHERE id = $2`,
 		isActive,
@@ -85,7 +85,7 @@ func (r *UserRepo) UpdateIsActive(ctx context.Context, id string, isActive bool)
 func (r *UserRepo) ListByTeam(ctx context.Context, teamID string, onlyActive bool) ([]*domain.User, error) {
 	builder := r.psql.
 		Select("id", "username", "team_id", "is_active", "created_at", "updated_at").
-		From(`"user"`).
+		From(`"users"`).
 		Where(sq.Eq{"team_id": teamID})
 
 	if onlyActive {

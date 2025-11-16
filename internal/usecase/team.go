@@ -1,13 +1,13 @@
 package usecase
 
 import (
-	context "context"
+	"context"
 	"fmt"
+
+	"github.com/google/uuid"
 
 	"gopr/internal/domain"
 	"gopr/internal/repo"
-
-	"github.com/google/uuid"
 )
 
 type Team struct {
@@ -28,12 +28,11 @@ func (t *Team) AddTeam(ctx context.Context, input *domain.TeamAddInput) (*domain
 		Name: input.TeamName,
 	}
 
-	err := t.teamRepo.Create(ctx, team)
-	if err != nil {
+	if err := t.teamRepo.Create(ctx, team); err != nil {
 		return nil, fmt.Errorf("failed to create team: %w", err)
 	}
 
-	var members []*domain.User
+	members := make([]*domain.User, 0, len(input.Members))
 
 	for _, m := range input.Members {
 		user := &domain.User{
@@ -43,8 +42,7 @@ func (t *Team) AddTeam(ctx context.Context, input *domain.TeamAddInput) (*domain
 			IsActive: m.IsActive,
 		}
 
-		err := t.userRepo.Create(ctx, user)
-		if err != nil {
+		if err := t.userRepo.Create(ctx, user); err != nil {
 			return nil, fmt.Errorf("failed to create user %s: %w", m.UserID, err)
 		}
 
@@ -57,13 +55,13 @@ func (t *Team) AddTeam(ctx context.Context, input *domain.TeamAddInput) (*domain
 	}, nil
 }
 
-func (t *Team) GetTeam(ctx context.Context, teamID string) (*domain.TeamWithMembers, error) {
-	team, err := t.teamRepo.GetByID(ctx, teamID)
+func (t *Team) GetTeam(ctx context.Context, teamName string) (*domain.TeamWithMembers, error) {
+	team, err := t.teamRepo.GetByName(ctx, teamName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team: %w", err)
 	}
 
-	users, err := t.userRepo.ListByTeam(ctx, teamID, false)
+	users, err := t.userRepo.ListByTeam(ctx, team.Id, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load team users: %w", err)
 	}
