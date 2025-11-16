@@ -10,3 +10,9 @@ type User struct {
 	TeamId    string    `json:"team_id"`
 	IsActive  bool      `json:"is_active"`
 }
+
+type CreateUser struct{}
+
+type PatchUser struct{}
+
+type FilterUser struct{}
